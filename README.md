@@ -11,7 +11,7 @@ static method named `init` responsible for initializing all of the hooks reposon
 
 The method must implement the following methods hooks (this is an example code, you can have this implemented wherever you like as long as they are accessible for the PHP and WP):
 
-`
+```
 			\add_filter( WP_2FA_PREFIX . 'providers_translated_names', array( __CLASS__, 'name_translated' ) );
 
 			\add_filter( WP_2FA_PREFIX . 'providers', array( __CLASS__, 'add_provider' ) );
@@ -33,10 +33,10 @@ The method must implement the following methods hooks (this is an example code, 
 					return $available_methods;
 				}
 			);
-`
+```
 Following is more detailed explanation of every hook and its code implementation
 
-`
+```
 		/**
 		 * Adds translatable name
 		 * Receives an array with all of the registered methods / providers.
@@ -53,9 +53,9 @@ Following is more detailed explanation of every hook and its code implementation
 
 			return $providers;
 		}
-`
+```
 
-`
+```
 		/**
 		 * Adds the method to the global providers / methods supported by the plugin.
 		 * Receives array with all of the registered methods, use it to add / register your method giving its slug
@@ -71,9 +71,9 @@ Following is more detailed explanation of every hook and its code implementation
 
 			return $providers;
 		}
-`
+```
 
-`
+```
         /**
 		 * Adds the method default settings to the main plugin settings.
 		 * Receives array with all of the (currently) registered settings, and gives the ability for the method to add its own settings to global array.
@@ -90,9 +90,9 @@ Following is more detailed explanation of every hook and its code implementation
 
 			return $default_settings;
 		}
-`
+```
 
-`
+```
 		/**
 		 * Add extension settings to the loop array
 		 *
@@ -112,4 +112,4 @@ Following is more detailed explanation of every hook and its code implementation
 
 			return $loop_settings;
 		}
-`
+```
