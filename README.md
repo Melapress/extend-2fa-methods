@@ -37,7 +37,7 @@ const METHOD_NAME = 'new_2fa_method';
 
 	\add_filter( WP_2FA_PREFIX . 'no_method_enabled', array( __CLASS__, 'return_default_selection' ), 10, 1 );
 
-	// add the TOTP methods to the list of available methods if enabled.
+	// add the new method to the list of available methods if enabled.
 	\add_filter(
 		WP_2FA_PREFIX . 'available_2fa_methods',
 		function ( $available_methods ) {
