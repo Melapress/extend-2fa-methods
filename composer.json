@@ -1,0 +1,23 @@
+{
+  "name": "wp-2fa/extender",
+  "description": "Two Factor Auth plugin",
+  "type": "wordpress-plugin",
+  "version": "1.0.0",
+  "authors": [
+    {
+      "name": "WPWhiteSecurity",
+      "email": "support@melapress.com"
+    }
+  ],
+  "require": {
+    "php": ">=7.4"
+  },
+  "autoload": {
+    "psr-4": {
+      "WP2FA\\": "classes/"
+    },
+    "classmap": [
+      "classes/"
+    ]
+  }
+}
