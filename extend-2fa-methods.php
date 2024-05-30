@@ -37,6 +37,7 @@
 
 use WP2FA\Methods\Main_Method;
 use WP2FA\Admin\Helpers\Classes_Helper;
+use WP2FA\Methods\Backup_Method;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -63,6 +64,24 @@ if ( file_exists( WP_EXT_PATH . 'vendor/autoload.php' ) ) {
 		Classes_Helper::add_to_class_map(
 			array(
 				Main_Method::class => ( new \ReflectionClass( Main_Method::class ) )->getFileName(),
+			)
+		);
+	}
+);
+
+\add_action(
+	'wp_2fa_add_to_class_map',
+	/**
+	* Adds sensors classes to the Class Helper
+	*
+	* @return void
+	*
+	* @since latest
+	*/
+	function () {
+		Classes_Helper::add_to_class_map(
+			array(
+				Backup_Method::class => ( new \ReflectionClass( Backup_Method::class ) )->getFileName(),
 			)
 		);
 	}

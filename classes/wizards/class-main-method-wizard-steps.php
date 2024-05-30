@@ -85,7 +85,7 @@ if ( ! class_exists( '\WP2FA\Methods\Wizards\Main_Method_Wizard_Steps' ) ) {
 		 */
 		public static function main_method_re_configure( array $methods, string $role ): array {
 
-			if ( ! self::$main_class::is_enabled() ) {
+			if ( ! self::get_main_class()::is_enabled() ) {
 				return $methods;
 			}
 			\ob_start();
@@ -94,7 +94,7 @@ if ( ! class_exists( '\WP2FA\Methods\Wizards\Main_Method_Wizard_Steps' ) ) {
 				<h3><?php echo \esc_html__( 'Setting up Main Method Example', 'wp-2fa' ); ?></h3>
 				<p><?php echo \esc_html__( 'This is an intro text for the user', 'wp-2fa' ); ?></p>
 				<div class="wp2fa-setup-actions">
-					<a class="button button-primary wp-2fa-button-primary" data-name="next_step_setting_modal_wizard" data-user-id="<?php echo esc_attr( User_Helper::get_user_object()->ID ); ?>" data-next-step="2fa-wizard-<?php echo \esc_attr( self::$main_class::METHOD_NAME ); ?>"><?php esc_html_e( 'Change Main Method Example', 'wp-2fa' ); ?></a>
+					<a class="button button-primary wp-2fa-button-primary" data-name="next_step_setting_modal_wizard" data-user-id="<?php echo esc_attr( User_Helper::get_user_object()->ID ); ?>" data-next-step="2fa-wizard-<?php echo \esc_attr( self::get_main_class()::get_method_name() ); ?>"><?php esc_html_e( 'Change Main Method Example', 'wp-2fa' ); ?></a>
 				</div>
 			</div>
 			<?php
@@ -102,7 +102,7 @@ if ( ! class_exists( '\WP2FA\Methods\Wizards\Main_Method_Wizard_Steps' ) ) {
 				ob_end_clean();
 
 				$methods[ self::get_order( $role, $methods ) ] = array(
-					'name'   => self::$main_class::METHOD_NAME,
+					'name'   => self::get_main_class()::get_method_name(),
 					'output' => $output,
 				);
 
@@ -120,13 +120,13 @@ if ( ! class_exists( '\WP2FA\Methods\Wizards\Main_Method_Wizard_Steps' ) ) {
 		 * @return array
 		 */
 		public static function main_method_option( array $methods, string $role ): array {
-			if ( self::$main_class::is_enabled() ) {
+			if ( self::get_main_class()::is_enabled() ) {
 				\ob_start();
 				?>
 					<div class="option-pill">
-						<label>
-							<input name="wp_2fa_enabled_methods" type="radio" value="email">
-						<?php \esc_html__( 'Main method Example', 'wp-2fa' ); ?>
+						<label for="<?php echo \esc_attr( self::get_main_class()::get_method_name() ); ?>">
+							<input id="<?php echo \esc_attr( self::get_main_class()::get_method_name() ); ?>" name="wp_2fa_enabled_methods" type="radio" value="<?php echo \esc_attr( self::get_main_class()::get_method_name() ); ?>">
+						<?php \esc_html_e( 'Main method Example', 'wp-2fa' ); ?>
 						</label>
 					</div>
 				<?php
@@ -161,13 +161,13 @@ if ( ! class_exists( '\WP2FA\Methods\Wizards\Main_Method_Wizard_Steps' ) ) {
 			}
 			\ob_start();
 			?>
-				<div id="<?php echo \esc_attr( self::$main_class::METHOD_NAME ); ?>-method-wrapper" class="method-wrapper">
+				<div id="<?php echo \esc_attr( self::get_main_class()::get_method_name() ); ?>-method-wrapper" class="method-wrapper">
 					<?php echo self::hidden_order_setting( $role ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
-					<label for="<?php echo \esc_attr( self::$main_class::METHOD_NAME . $role_id ); ?>" style="margin-bottom: 0 !important;">
-						<input type="checkbox" id="<?php echo \esc_attr( self::$main_class::METHOD_NAME . $role_id ); ?>" name="<?php echo \esc_attr( $name_prefix ); ?>[<?php echo esc_attr( self::$main_class::POLICY_SETTINGS_NAME ); ?>]" value="<?php echo \esc_attr( self::$main_class::POLICY_SETTINGS_NAME ); ?>"
+					<label for="<?php echo \esc_attr( self::get_main_class()::get_method_name() . $role_id ); ?>" style="margin-bottom: 0 !important;">
+						<input type="checkbox" id="<?php echo \esc_attr( self::get_main_class()::get_method_name() . $role_id ); ?>" name="<?php echo \esc_attr( $name_prefix ); ?>[<?php echo esc_attr( self::get_main_class()::POLICY_SETTINGS_NAME ); ?>]" value="<?php echo \esc_attr( self::get_main_class()::POLICY_SETTINGS_NAME ); ?>"
 						<?php echo $data_role; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
 						<?php if ( null !== $role && ! empty( $role ) ) { ?>
-							<?php checked( self::$main_class::POLICY_SETTINGS_NAME, Role_Settings_Controller::get_setting( $role, self::$main_class::POLICY_SETTINGS_NAME ), true ); ?>
+							<?php checked( self::get_main_class()::POLICY_SETTINGS_NAME, Role_Settings_Controller::get_setting( $role, self::get_main_class()::POLICY_SETTINGS_NAME ), true ); ?>
 							<?php
 						} else {
 							$use_role_setting = null;
@@ -175,9 +175,9 @@ if ( ! class_exists( '\WP2FA\Methods\Wizards\Main_Method_Wizard_Steps' ) ) {
 								$use_role_setting = \WP_2FA_PREFIX . 'no-user';
 							}
 
-							$enabled_settings = Settings::get_role_or_default_setting( self::$main_class::POLICY_SETTINGS_NAME, $use_role_setting, $role, true );
+							$enabled_settings = Settings::get_role_or_default_setting( self::get_main_class()::POLICY_SETTINGS_NAME, $use_role_setting, $role, true );
 							?>
-							<?php checked( $enabled_settings, self::$main_class::POLICY_SETTINGS_NAME ); ?>
+							<?php checked( $enabled_settings, self::get_main_class()::POLICY_SETTINGS_NAME ); ?>
 						<?php } ?>
 						>
 						<?php
@@ -191,9 +191,9 @@ if ( ! class_exists( '\WP2FA\Methods\Wizards\Main_Method_Wizard_Steps' ) ) {
 					?>
 					<?php
 					if ( null !== $role ) {
-						$enabled_settings = Role_Settings_Controller::get_setting( $role, self::$main_class::POLICY_SETTINGS_NAME );
+						$enabled_settings = Role_Settings_Controller::get_setting( $role, self::get_main_class()::POLICY_SETTINGS_NAME );
 					} else {
-						$enabled_settings = Settings::get_role_or_default_setting( self::$main_class::POLICY_SETTINGS_NAME, ( ( null !== $role && '' !== $role ) ? '' : false ), $role, true, true );
+						$enabled_settings = Settings::get_role_or_default_setting( self::get_main_class()::POLICY_SETTINGS_NAME, ( ( null !== $role && '' !== $role ) ? '' : false ), $role, true, true );
 					}
 					?>
 				</div>
@@ -215,11 +215,11 @@ if ( ! class_exists( '\WP2FA\Methods\Wizards\Main_Method_Wizard_Steps' ) ) {
 		 */
 		public static function main_method_modal_configure() {
 
-			if ( ! self::$main_class::is_enabled() ) {
+			if ( ! self::get_main_class()::is_enabled() ) {
 				return;
 			}
 			?>
-			<div class="wizard-step" id="2fa-wizard-<?php echo \esc_attr( self::$main_class::METHOD_NAME ); ?>">
+			<div class="wizard-step" id="2fa-wizard-<?php echo \esc_attr( self::get_main_class()::get_method_name() ); ?>">
 				<fieldset>
 					<div class="step-setting-wrapper active">
 						<div class="mb-20">
@@ -303,7 +303,7 @@ if ( ! class_exists( '\WP2FA\Methods\Wizards\Main_Method_Wizard_Steps' ) ) {
 		 * @since 1.0.0
 		 */
 		public static function login_form( $user, $provider ) {
-			if ( self::$main_class::METHOD_NAME === $provider ) {
+			if ( self::get_main_class()::get_method_name() === $provider ) {
 
 				?>
 				<p style="margin-bottom: 3em;"><?php echo \esc_html__( 'Thank you for using the example method to login.', 'wp-2fa' ); ?></p>

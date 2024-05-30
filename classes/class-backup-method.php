@@ -22,9 +22,7 @@ use WP2FA\Admin\Settings_Page;
 use WP2FA\Utils\Settings_Utils;
 use WP2FA\Admin\Helpers\User_Helper;
 use WP2FA\Admin\Controllers\Settings;
-use WP2FA\Authenticator\Authentication;
-use WP2FA\Admin\Methods\Traits\Login_Attempts;
-
+use WP2FA\Methods\Wizards\Backup_Method_Wizard_Steps;
 /**
  * Class for handling backup codes.
  *
@@ -40,17 +38,6 @@ if ( ! class_exists( '\WP2FA\Methods\Backup_Method' ) ) {
 	 */
 	class Backup_Method {
 
-		use Login_Attempts;
-
-		/**
-		 * Holds the name of the meta key for the allowed login attempts.
-		 *
-		 * @var string
-		 *
-		 * @since 1.0.0
-		 */
-		private static $logging_attempts_meta_key = WP_2FA_PREFIX . 'backup-login-attempts';
-
 		/**
 		 * Key used for backup codes.
 		 *
@@ -58,16 +45,16 @@ if ( ! class_exists( '\WP2FA\Methods\Backup_Method' ) ) {
 		 *
 		 * @since 1.0.0
 		 */
-		public const BACKUP_CODES_META_KEY = 'wp_2fa_backup_method';
+		public const BACKUP_CODES_META_KEY = 'backup_method';
 
 		/**
-		 * The number backup codes.
+		 * The name of the method stored in the policy
 		 *
-		 * @var int
+		 * @var string
 		 *
 		 * @since 1.0.0
 		 */
-		public const NUMBER_OF_CODES = 10;
+		public const SETTINGS_NAME = 'enable_backup_method';
 
 		/**
 		 * The name of the method.
@@ -77,15 +64,6 @@ if ( ! class_exists( '\WP2FA\Methods\Backup_Method' ) ) {
 		 * @since 1.0.0
 		 */
 		public const METHOD_NAME = 'backup_method';
-
-		/**
-		 * The login attempts class.
-		 *
-		 * @var \WP2FA\Admin\Controllers\Login_Attempts
-		 *
-		 * @since 1.0.0
-		 */
-		private static $login_attempts = null;
 
 		/**
 		 * Holds the status of the backup codes functionality
@@ -104,7 +82,7 @@ if ( ! class_exists( '\WP2FA\Methods\Backup_Method' ) ) {
 		 * @since 1.0.0
 		 */
 		private static $settings = array(
-			'backup_method_enabled' => 'yes',
+			self::SETTINGS_NAME => 'yes',
 		);
 
 		/**
@@ -117,7 +95,6 @@ if ( ! class_exists( '\WP2FA\Methods\Backup_Method' ) ) {
 		public static function init() {
 			\add_filter( WP_2FA_PREFIX . 'backup_methods_list', array( __CLASS__, 'add_backup_method' ), 10, 2 );
 			\add_filter( WP_2FA_PREFIX . 'backup_methods_enabled', array( __CLASS__, 'check_backup_method_for_role' ), 10, 2 );
-			\add_action( 'wp_ajax_wp2fa_run_ajax_generate_json', array( __CLASS__, 'run_ajax_generate_json' ) );
 
 			\add_action( WP_2FA_PREFIX . 'remove_backup_methods_for_user', array( __CLASS__, 'remove_backup_methods_for_user' ) );
 
@@ -130,43 +107,12 @@ if ( ! class_exists( '\WP2FA\Methods\Backup_Method' ) ) {
 			\add_filter( WP_2FA_PREFIX . 'providers_translated_names', array( __CLASS__, 'fill_providers_array_with_method_name_translated' ) );
 
 			\add_filter( WP_2FA_PREFIX . 'user_enabled_backup_methods', array( __CLASS__, 'method_enabled_for_user' ), 10, 2 );
-		}
 
-		/**
-		 * Generate backup codes.
-		 *
-		 * @param object $user User data.
-		 * @param string $args possible args.
-		 *
-		 * @since 1.0.0
-		 */
-		public static function generate_codes( $user, $args = '' ) {
-			$codes        = array();
-			$codes_hashed = array();
+			\add_action( 'wp_ajax_run_ajax_save_backup_method', array( __CLASS__, 'run_ajax_save_backup_method' ) );
 
-			// Check for arguments.
-			if ( isset( $args['number'] ) ) {
-				$num_codes = (int) $args['number'];
-			} else {
-				$num_codes = self::NUMBER_OF_CODES;
-			}
+			\add_action( 'wp_ajax_remove_backup_method', array( __CLASS__, 'remove_user_backup_method' ) );
 
-			// Append or replace (default).
-			if ( isset( $args['method'] ) && 'append' === $args['method'] ) {
-				$codes_hashed = (array) \get_user_meta( $user->ID, self::BACKUP_CODES_META_KEY, true );
-			}
-
-			for ( $i = 0; $i < $num_codes; ++$i ) {
-				$code           = Authentication::get_code();
-				$codes_hashed[] = \wp_hash_password( $code );
-				$codes[]        = $code;
-				unset( $code );
-			}
-
-			\update_user_meta( $user->ID, self::BACKUP_CODES_META_KEY, $codes_hashed );
-
-			// Unhashed.
-			return $codes;
+			Backup_Method_Wizard_Steps::init();
 		}
 
 		/**
@@ -244,88 +190,6 @@ if ( ! class_exists( '\WP2FA\Methods\Backup_Method' ) ) {
 		}
 
 		/**
-		 * Generate codes and check remaining amount for user.
-		 *
-		 * @return void
-		 *
-		 * @since 1.0.0
-		 */
-		public static function run_ajax_generate_json() {
-			$user = wp_get_current_user();
-
-			check_ajax_referer( 'wp-2fa-backup-codes-generate-json-' . $user->ID, 'nonce' );
-
-			// Setup the return data.
-			$codes = self::generate_codes( $user );
-
-			$count = self::codes_remaining_for_user( $user );
-			$i18n  = array(
-				'count' => esc_html(
-					sprintf(
-						/* translators: %s: count */
-						_n( '%s unused code remaining.', '%s unused codes remaining.', $count, 'wp-2fa' ),
-						$count
-					)
-				),
-				/* translators: %s: the site's domain */
-				'title' => esc_html__( 'Two-Factor Backup Codes for %s', 'wp-2fa' ),
-			);
-
-			// Send the response.
-			wp_send_json_success(
-				array(
-					'codes' => $codes,
-					'i18n'  => $i18n,
-				)
-			);
-		}
-
-		/**
-		 * Grab number of unused backup codes within the users position.
-		 *
-		 * @param object $user - User data.
-		 *
-		 * @return int Count of codes.
-		 *
-		 * @since 1.0.0
-		 */
-		public static function codes_remaining_for_user( $user ) {
-			$backup_method = \get_user_meta( $user->ID, self::BACKUP_CODES_META_KEY, true );
-			if ( is_array( $backup_method ) && ! empty( $backup_method ) ) {
-				return count( $backup_method );
-			}
-
-			return 0;
-		}
-
-		/**
-		 * Validate backup codes.
-		 *
-		 * @param object $user User data.
-		 * @param string $code The code we are checking.
-		 *
-		 * @return bool Is is valid or not.
-		 *
-		 * @since 1.0.0
-		 */
-		public static function validate_code( $user, $code ) {
-			$backup_method = \get_user_meta( $user->ID, self::BACKUP_CODES_META_KEY, true );
-			if ( is_array( $backup_method ) && ! empty( $backup_method ) ) {
-				foreach ( $backup_method as $code_hashed ) {
-					if ( \wp_check_password( $code, $code_hashed, $user->ID ) ) {
-						self::delete_code( $user, $code_hashed );
-						self::clear_login_attempts( $user );
-
-						return true;
-					}
-				}
-			}
-			self::increase_login_attempts( $user );
-
-			return false;
-		}
-
-		/**
 		 * Delete code once its used.
 		 *
 		 * @param object $user        User data.
@@ -357,12 +221,8 @@ if ( ! class_exists( '\WP2FA\Methods\Backup_Method' ) ) {
 				$backup_methods,
 				array(
 					self::METHOD_NAME => array(
-						'wizard-step' => '2fa-wizard-config-backup-codes',
-						'button_name' => sprintf(
-							/* translators: URL with more information about the backup codes */
-							esc_html__( 'Login with a backup code: you will get 10 backup codes and you can use one of them when you need to login and you cannot generate a code from the app. %s', 'wp-2fa' ),
-							'<a href="https://melapress.com/2fa-backup-codes/" target="_blank">' . esc_html__( 'More information.', 'wp-2fa' ) . '</a>'
-						),
+						'wizard-step' => '2fa-wizard-config-backup-method',
+						'button_name' => esc_html__( 'Login with a backup method', 'wp-2fa' ),
 					),
 				)
 			);
@@ -423,7 +283,7 @@ if ( ! class_exists( '\WP2FA\Methods\Backup_Method' ) ) {
 		}
 
 		/**
-		 * Checks if the backup codes are enabled for the user.
+		 * Checks if the backup method are enabled for the user.
 		 *
 		 * @param int|\WP_User|null $user - The WP user we should extract the meta data for.
 		 *
@@ -434,15 +294,11 @@ if ( ! class_exists( '\WP2FA\Methods\Backup_Method' ) ) {
 		 * @throws \LogicException - can not extract user from the given parameters.
 		 */
 		public static function is_enabled_for_user( $user ): bool {
-			$user = User_Helper::get_user_object( $user );
-
-			if ( ! \is_a( $user, '\WP_User' ) ) {
-				throw new \LogicException( 'Not a proper user object provided!' );
+			if ( $user->get( self::METHOD_NAME ) ) {
+				return true;
 			}
 
-			$codes_remaining = self::codes_remaining_for_user( $user );
-
-			return (bool) $codes_remaining;
+			return false;
 		}
 
 		/**
@@ -489,25 +345,6 @@ if ( ! class_exists( '\WP2FA\Methods\Backup_Method' ) ) {
 		 */
 		public static function get_settings_default_value() {
 			return \reset( self::$settings );
-		}
-
-		/**
-		 * Validates a backup code.
-		 *
-		 * Backup Codes are single use and are deleted upon a successful validation.
-		 *
-		 * @since 1.0.0
-		 *
-		 * @param \WP_User $user \WP_User object of the logged-in user.
-		 *
-		 * @return boolean
-		 */
-		public static function validate_backup_method( $user ) {
-			if ( ! isset( $user->ID ) || ! isset( $_REQUEST['wp-2fa-backup-code'] ) ) { //phpcs:ignore
-				return false;
-			}
-
-			return self::validate_code( $user, \sanitize_text_field( \wp_unslash( $_REQUEST['wp-2fa-backup-code'] ) ) );
 		}
 
 		/**
@@ -592,6 +429,89 @@ if ( ! class_exists( '\WP2FA\Methods\Backup_Method' ) ) {
 			}
 
 			return Settings_Page::send_email( $email_address, $subject, $final_output );
+		}
+
+		/**
+		 * AJAX method for saving the email backup settings.
+		 *
+		 * @return void
+		 *
+		 * @since 1.0.0
+		 */
+		public static function run_ajax_save_backup_method() {
+			$which_address = '';
+
+			if ( isset( $_POST['user_id'] ) ) {
+				$user_id = (int) $_POST['user_id'];
+				$user    = get_user_by( 'id', sanitize_text_field( $user_id ) );
+				if ( ! $user ) {
+					$user = wp_get_current_user();
+				}
+			} else {
+				$user = wp_get_current_user();
+			}
+
+			check_ajax_referer( 'wp-2fa-backup-codes-generate-json-' . $user->ID, 'nonce' );
+
+			self::save_backup_method( $user );
+
+			// Send the response.
+			\wp_send_json_success();
+		}
+
+		/**
+		 * Saves the methods into the users meta.
+		 *
+		 * @param \WP_User $user  - The user which address we must updated.
+		 *
+		 * @return void
+		 *
+		 * @since 2.0.0
+		 */
+		public static function save_backup_method( \WP_User $user ) {
+			User_Helper::set_meta( self::METHOD_NAME, true, $user );
+		}
+
+		/**
+		 * Removes the backup method from the users meta.
+		 *
+		 * @param \WP_User $user - The user which address we must update.
+		 *
+		 * @return void
+		 *
+		 * @since 1.0.0
+		 */
+		public static function remove_backup_method( \WP_User $user ) {
+			User_Helper::remove_meta( self::METHOD_NAME, $user );
+		}
+
+		/**
+		 * Remove user 2fa backup method via ajax request.
+		 *
+		 * @return void
+		 *
+		 * @since 1.0.0
+		 */
+		public static function remove_user_backup_method() {
+			// Filter $_GET array for security.
+			$get_array = filter_input_array( INPUT_GET );
+			$nonce     = sanitize_text_field( $get_array['wp_2fa_nonce'] );
+
+			if ( ! wp_verify_nonce( $nonce, 'wp-2fa-remove-user-backup-method-nonce' ) ) {
+				exit( esc_html__( 'Nonce verification failed.', 'wp-2fa' ) );
+			}
+
+			if ( isset( $get_array['user_id'] ) ) {
+				$user_id = intval( $get_array['user_id'] );
+
+				$current_user = User_Helper::get_user();
+
+				if ( ! current_user_can( 'manage_options' ) && $current_user->ID !== $user_id ) {
+					return;
+				}
+
+				self::remove_backup_method( $current_user );
+			}
 		}
 	}
 }

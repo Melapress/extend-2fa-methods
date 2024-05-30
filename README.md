@@ -1,3 +1,5 @@
+### Primary methods extending
+
 In order to create a new primary method in WP2FA you need the following:
 
 *Note:*: important note about the naming convention used in this document - **method**, **provider** and **extension** meaning the same thing.
@@ -145,13 +147,109 @@ Following is more detailed explanation of every hook and its code implementation
 	 * @since latest
 	 */
 	public static function return_default_selection( array $output ) {
-	
+
 		$output[ self::POLICY_SETTINGS_NAME ] = (true|false);
 
 		return $output;
 	}
+```
+
+Main methods also include interface methods achieved by implementing wizard steps class. It has access to the following hooks:
 
 ```
+	\add_filter( WP_2FA_PREFIX . 'methods_modal_options', array( __CLASS__, 'main_method_option' ), 10, 2 );
+	\add_action( WP_2FA_PREFIX . 'modal_methods', array( __CLASS__, 'main_method_modal_configure' ) );
+	\add_filter( WP_2FA_PREFIX . 'methods_re_configure', array( __CLASS__, 'main_method_re_configure' ), 10, 2 );
+	\add_filter( WP_2FA_PREFIX . 'methods_settings', array( __CLASS__, 'main_method_wizard_settings' ), 10, 4 );
+	\add_action( WP_2FA_PREFIX . 'login_form', array( __CLASS__, 'login_form' ), 10, 2 );
+```
+
+For more compatibility, that class should use `Methods_Wizards_Trait`, which gives the user ability to interact with methods. Proper ordering is one of them.
+
+#### Filters in wizard
+
+```
+	/**
+	 * Shows methods in order. Every method is called and its code and order is collected. That is used when there are no methods selected from the user.
+	 *
+	 * @param array - All the collected methods and their order.
+	 * @param string $role - The role of the current user
+	 *
+	 * @since 2.6.0
+	 */
+	\apply_filters( WP_2FA_PREFIX . 'methods_modal_options', array(), $role );
+```
+
+This is called when user has no method selected. Showed in the modal window.
+
+[Usage example code](https://github.com/wpwhitesecurity/extend-2fa-methods/blob/b89592bdaee494a8da35a32e857c59ad6a18e027/classes/wizards/class-main-method-wizard-steps.php#L122)
+
+```
+	/**
+	 * Add an option for external providers to add their own modal methods options.
+	 *
+	 * @since 2.0.0
+	 */
+	\do_action( WP_2FA_PREFIX . 'modal_methods' );
+	
+```
+
+This hook is called when the user is presented with the modal window with all methods as options to choose from.
+
+[Usage example code](https://github.com/wpwhitesecurity/extend-2fa-methods/blob/b89592bdaee494a8da35a32e857c59ad6a18e027/classes/wizards/class-main-method-wizard-steps.php#L216)
+
+```
+	/**
+	 * Option to re-configure the methods - all the methods are called and their order and code is collected. Then the currently selected method is positioned on top and methods are shown in order. That is called in the user profile page.
+	 *
+	 * @param array - All the collected methods and their order.
+	 * @param string $role - The role of the current user
+	 *
+	 * @since 2.6.0
+	 */
+	\apply_filters( WP_2FA_PREFIX . 'methods_re_configure', array(), $role );
+```
+
+This hook is called when user decides to re-configure (switch to another or update the current one) method.
+
+[Usage example code](https://github.com/wpwhitesecurity/extend-2fa-methods/blob/b89592bdaee494a8da35a32e857c59ad6a18e027/classes/wizards/class-main-method-wizard-steps.php#L86)
+
+```
+	/**
+	 * Shows methods in order. Every method is called and its code and order is collected. Used in the wizards.
+	 *
+	 * @param array - All the collected methods and their order.
+	 * @param bool - Is that a setup wizard call or not?
+	 * @param string - Additional HTML data attribute.
+	 * @param string $role - The role, that is when global settings of the plugin are selected.
+	 *
+	 * @since 2.6.0
+	 */
+	\apply_filters( WP_2FA_PREFIX . 'methods_settings', array(), $setup_wizard, $data_role, $role );
+```
+
+This hook is called when the methods settings are presented to the administrator.
+
+[Usage example code](https://github.com/wpwhitesecurity/extend-2fa-methods/blob/b89592bdaee494a8da35a32e857c59ad6a18e027/classes/wizards/class-main-method-wizard-steps.php#L154)
+
+```
+	/**
+	 * Allows 3rd parties to render their own 2FA "login" form.
+	 *
+	 * @param \WP_User $user - User for which the login form is shown.
+	 * @param string $provider - The name of the provider.
+	 *
+	 * @since 2.0.0
+	 */
+	do_action( WP_2FA_PREFIX . 'login_form', $user, $provider );
+```
+
+This hook is after user is logging in (their username and pass is collected) and user have to finish the process using the method challenge.
+
+
+[Usage example code](https://github.com/wpwhitesecurity/extend-2fa-methods/blob/b89592bdaee494a8da35a32e857c59ad6a18e027/classes/wizards/class-main-method-wizard-steps.php#L305)
+
+### Backup methods extending
 
 In order to create a new backup method in WP2FA you need the following:
 
@@ -352,3 +450,37 @@ Following is more detailed explanation of every hook and its code implementation
 		return $providers;
 	}
 ```
+
+### Attach methods to the main plugin
+
+In order to be visible to the main plugin, the new methods must be attached to the plugin's logic. You can achieve this by using hte following action:
+`wp_2fa_add_to_class_map`
+
+Example:
+
+```
+\add_action(
+	'wp_2fa_add_to_class_map',
+	/**
+	* Adds sensors classes to the Class Helper
+	*
+	* @return void
+	*
+	* @since latest
+	*/
+	function () {
+		Classes_Helper::add_to_class_map(
+			array(
+				Main_Method::class => ( new \ReflectionClass( Main_Method::class ) )->getFileName(),
+			)
+		);
+	}
+);
+```
+
+Where:
+`Classes_Helper` is core 2FA plugin class responsible for some PHP class operations.
+`Main_Method::class` is the name of your class ( method you are implementing )
+
+This action is called right before some extractions are performed using the `Classes_Helper` class, which is point you need to attach your custom logic.
+The method accepts array with class names as keys and absolute paths as values.
