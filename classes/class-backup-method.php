@@ -24,7 +24,7 @@ use WP2FA\Admin\Helpers\User_Helper;
 use WP2FA\Admin\Controllers\Settings;
 use WP2FA\Methods\Wizards\Backup_Method_Wizard_Steps;
 /**
- * Class for handling backup codes.
+ * Class for handling backup method.
  *
  * @since 1.0.0
  *
@@ -39,13 +39,13 @@ if ( ! class_exists( '\WP2FA\Methods\Backup_Method' ) ) {
 	class Backup_Method {
 
 		/**
-		 * Key used for backup codes.
+		 * Key used for backup method.
 		 *
 		 * @var string
 		 *
 		 * @since 1.0.0
 		 */
-		public const BACKUP_CODES_META_KEY = 'backup_method';
+		public const BACKUP_METHOD_META_KEY = 'backup_method';
 
 		/**
 		 * The name of the method stored in the policy
@@ -66,7 +66,7 @@ if ( ! class_exists( '\WP2FA\Methods\Backup_Method' ) ) {
 		public const METHOD_NAME = 'backup_method';
 
 		/**
-		 * Holds the status of the backup codes functionality
+		 * Holds the status of the backup method functionality
 		 *
 		 * @var bool[]
 		 *
@@ -86,7 +86,7 @@ if ( ! class_exists( '\WP2FA\Methods\Backup_Method' ) ) {
 		);
 
 		/**
-		 * Inits the backup codes class hooks
+		 * Inits the backup method class hooks
 		 *
 		 * @return void
 		 *
@@ -112,7 +112,43 @@ if ( ! class_exists( '\WP2FA\Methods\Backup_Method' ) ) {
 
 			\add_action( 'wp_ajax_remove_backup_method', array( __CLASS__, 'remove_user_backup_method' ) );
 
+			\add_filter( \WP_2FA_PREFIX . 'backup_methods_meta_keys', array( __CLASS__, 'meta_user_backup_method' ) );
+
+			\add_filter( \WP_2FA_PREFIX . 'backup_methods_report_settings', array( __CLASS__, 'backup_method_report_settings' ) );
+
 			Backup_Method_Wizard_Steps::init();
+		}
+
+		/**
+		 * Fulfills the array of the report with all the values needed
+		 *
+		 * @param array $settings - The currently collected settings.
+		 *
+		 * @return array
+		 *
+		 * @since 1.0.0
+		 */
+		public static function backup_method_report_settings( array $settings ): array {
+			$settings[] = array(
+				'user_meta_key' => self::BACKUP_METHOD_META_KEY,
+				'slug'          => self::METHOD_NAME,
+			);
+			return $settings;
+		}
+
+		/**
+		 * Adds the backup method meta key which will be check in the users meta and shown in the report if enabled.
+		 *
+		 * @param array $backup_meta_keys - Array with the collected meta keys form backup methods.
+		 *
+		 * @return array
+		 *
+		 * @since 1.0.0
+		 */
+		public static function meta_user_backup_method( array $backup_meta_keys ) {
+			$backup_meta_keys[] = self::BACKUP_METHOD_META_KEY;
+
+			return $backup_meta_keys;
 		}
 
 		/**
@@ -134,7 +170,7 @@ if ( ! class_exists( '\WP2FA\Methods\Backup_Method' ) ) {
 		}
 
 		/**
-		 * Adds Backup codes as a provider.
+		 * Adds Backup method as a provider.
 		 *
 		 * @param array $providers - Array with all currently supported providers.
 		 *
@@ -171,7 +207,7 @@ if ( ! class_exists( '\WP2FA\Methods\Backup_Method' ) ) {
 		 * @since 1.0.0
 		 */
 		public static function get_translated_name(): string {
-			return esc_html__( 'Backup codes', 'extend-2fa-methods' );
+			return esc_html__( 'Backup method', 'extend-2fa-methods' );
 		}
 
 		/**
@@ -185,7 +221,7 @@ if ( ! class_exists( '\WP2FA\Methods\Backup_Method' ) ) {
 		 */
 		public static function remove_backup_methods_for_user( $user ) {
 			if ( ! Settings::is_provider_enabled_for_role( User_Helper::get_user_role( $user ), self::get_method_name() ) ) {
-				\delete_user_meta( $user->ID, self::BACKUP_CODES_META_KEY );
+				\delete_user_meta( $user->ID, self::BACKUP_METHOD_META_KEY );
 			}
 		}
 
@@ -198,7 +234,7 @@ if ( ! class_exists( '\WP2FA\Methods\Backup_Method' ) ) {
 		 * @since 1.0.0
 		 */
 		public static function delete_code( $user, $code_hashed ) {
-			$backup_method = get_user_meta( $user->ID, self::BACKUP_CODES_META_KEY, true );
+			$backup_method = get_user_meta( $user->ID, self::BACKUP_METHOD_META_KEY, true );
 
 			// Delete the current code from the list since it's been used.
 			$backup_method = array_flip( $backup_method );
@@ -206,7 +242,7 @@ if ( ! class_exists( '\WP2FA\Methods\Backup_Method' ) ) {
 			$backup_method = array_values( array_flip( $backup_method ) );
 
 			// Update the backup code master list.
-			\update_user_meta( $user->ID, self::BACKUP_CODES_META_KEY, $backup_method );
+			\update_user_meta( $user->ID, self::BACKUP_METHOD_META_KEY, $backup_method );
 		}
 
 		/**
@@ -256,7 +292,7 @@ if ( ! class_exists( '\WP2FA\Methods\Backup_Method' ) ) {
 		}
 
 		/**
-		 * Checks if the backup codes option is enabled for the role
+		 * Checks if the backup method option is enabled for the role
 		 *
 		 * @param string $role - The role name.
 		 *
@@ -348,7 +384,7 @@ if ( ! class_exists( '\WP2FA\Methods\Backup_Method' ) ) {
 		}
 
 		/**
-		 * Returns the backup codes for the user.
+		 * Returns the backup method for the user.
 		 *
 		 * @param \WP_User $user \WP_User - object of the logged-in user.
 		 *
@@ -357,7 +393,7 @@ if ( ! class_exists( '\WP2FA\Methods\Backup_Method' ) ) {
 		 * @since 1.0.0
 		 */
 		public static function get_backup_method_for_user( $user ): array {
-			$backup_method = get_user_meta( $user->ID, self::BACKUP_CODES_META_KEY, true );
+			$backup_method = get_user_meta( $user->ID, self::BACKUP_METHOD_META_KEY, true );
 
 			if ( ! \is_array( $backup_method ) ) {
 				return array();
@@ -512,6 +548,17 @@ if ( ! class_exists( '\WP2FA\Methods\Backup_Method' ) ) {
 
 				self::remove_backup_method( $current_user );
 			}
+		}
+
+		/**
+		 * Marks methods as secondary.
+		 *
+		 * @return boolean
+		 *
+		 * @since latest
+		 */
+		public static function is_secondary() {
+			return true;
 		}
 	}
 }

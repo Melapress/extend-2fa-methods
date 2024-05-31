@@ -305,6 +305,9 @@ const METHOD_NAME = 'new_2fa_method';
 
 	\add_filter( WP_2FA_PREFIX . 'providers_translated_names', array( __CLASS__, 'name_translated' ) );
 
+	\add_filter( \WP_2FA_PREFIX . 'backup_methods_meta_keys', array( __CLASS__, 'meta_user_backup_method' ) );
+
+	\add_filter( \WP_2FA_PREFIX . 'backup_methods_report_settings', array( __CLASS__, 'backup_method_report_settings' ) );
 ```
 
 Following is more detailed explanation of every hook and its code implementation
@@ -355,7 +358,7 @@ Following is more detailed explanation of every hook and its code implementation
 	public static function check_backup_method_for_role( array $backup_methods, \WP_User $user ): array {
 
 		// Implement the necessarily checks based on the role provided, implement some caching, as there could be multiple calls.
-		$enabled = self::are_backup_codes_enabled_for_role( User_Helper::get_user_role( $user ) );
+		$enabled = self::are_backup_method_enabled_for_role( User_Helper::get_user_role( $user ) );
 
 		if ( ! $enabled ) {
 			unset( $backup_methods[ self::METHOD_NAME ] );
@@ -456,6 +459,55 @@ Following is more detailed explanation of every hook and its code implementation
 		$providers[ self::METHOD_NAME ] = esc_html__( 'Method Name', 'extend-2fa-methods' );
 
 		return $providers;
+	}
+```
+
+```
+	/**
+	 * Marks methods as secondary. Backup methods are secondary methods in plugin, so mark yours as one.
+	 *
+	 * @return boolean
+	 *
+	 * @since latest
+	 */
+	public static function is_secondary() {
+		return true;
+	}
+```
+
+```
+	/**
+	 * Fulfills the array of the report with all the values needed. Reports related - used for checking the user meta and determine if the given method is enabled or not.
+	 *
+	 * @param array $settings - The currently collected settings.
+	 *
+	 * @return array
+	 *
+	 * @since latest
+	 */
+	public static function backup_method_report_settings( array $settings ): array {
+		$settings[] = array(
+			'user_meta_key' => self::BACKUP_METHOD_META_KEY,
+			'slug'          => self::METHOD_NAME,
+		);
+		return $settings;
+	}
+```
+
+```
+	/**
+	 * Adds the backup method meta key which will be check in the users meta and shown in the report if enabled.
+	 *
+	 * @param array $backup_meta_keys - Array with the collected meta keys form backup methods.
+	 *
+	 * @return array
+	 *
+	 * @since latest
+	 */
+	public static function meta_user_backup_method( array $backup_meta_keys ) {
+		$backup_meta_keys[] = self::BACKUP_METHOD_META_KEY;
+
+		return $backup_meta_keys;
 	}
 ```
 
