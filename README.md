@@ -1,3 +1,11 @@
+# WP 2FA by WP White Security
+
+Easy to use two-factor authentication for your WordPress logins.
+
+https://wordpress.org/plugins/wp-2fa/
+
+# Extending 2FA methods documentation & information
+
 ### Primary methods extending
 
 In order to create a new primary method in WP2FA you need the following:
