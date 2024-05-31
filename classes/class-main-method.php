@@ -1,8 +1,8 @@
 <?php
 /**
- * Responsible for WP2FA user's email method manipulation.
+ * Main Method extender class example.
  *
- * @package    wp2fa
+ * @package    extend-2fa-methods
  * @subpackage methods
  *
  * @copyright  2024 Melapress
@@ -28,11 +28,11 @@ use WP2FA\Methods\Wizards\Main_Method_Wizard_Steps;
  *
  * @since 1.0.0
  *
- * @package WP2FA
+ * @package extend-2fa-methods
  */
 if ( ! class_exists( '\WP2FA\Methods\Main_Method' ) ) {
 	/**
-	 * Email code class, for handling email method code generation and such.
+	 * Main method code class.
 	 *
 	 * @since 1.0.0
 	 */
@@ -111,7 +111,7 @@ if ( ! class_exists( '\WP2FA\Methods\Main_Method' ) ) {
 		 * @since 1.0.0
 		 */
 		public static function name_translated( array $providers ) {
-			$providers[ self::METHOD_NAME ] = esc_html__( 'Main Method Example', 'wp-2fa' );
+			$providers[ self::METHOD_NAME ] = esc_html__( 'Main Method Example', 'extend-2fa-methods' );
 
 			return $providers;
 		}

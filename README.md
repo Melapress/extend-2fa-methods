@@ -70,7 +70,7 @@ Following is more detailed explanation of every hook and its code implementation
 	 * @since latest
 	 */
 	public static function name_translated( array $providers ): array {
-		$providers[ self::METHOD_NAME ] = esc_html__( 'Method Name', 'wp-2fa' );
+		$providers[ self::METHOD_NAME ] = esc_html__( 'Method Name', 'extend-2fa-methods' );
 
 		return $providers;
 	}
@@ -323,7 +323,7 @@ Following is more detailed explanation of every hook and its code implementation
 				self::METHOD_NAME => array(
 					'wizard-step' => '2fa-wizard-' . self::METHOD_NAME,
 					'button_name' => sprintf(
-						esc_html__( 'Login with a backup method', 'wp-2fa' )
+						esc_html__( 'Login with a backup method', 'extend-2fa-methods' )
 					),
 				),
 			)
@@ -445,7 +445,7 @@ Following is more detailed explanation of every hook and its code implementation
 	 * @since latest
 	 */
 	public static function name_translated( array $providers ): array {
-		$providers[ self::METHOD_NAME ] = esc_html__( 'Method Name', 'wp-2fa' );
+		$providers[ self::METHOD_NAME ] = esc_html__( 'Method Name', 'extend-2fa-methods' );
 
 		return $providers;
 	}

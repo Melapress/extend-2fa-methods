@@ -2,7 +2,7 @@
 /**
  * Backup method extender class example
  *
- * @package    wp2fa
+ * @package    extend-2fa-methods
  * @subpackage methods
  *
  * @copyright  2024 Melapress
@@ -28,7 +28,7 @@ use WP2FA\Methods\Wizards\Backup_Method_Wizard_Steps;
  *
  * @since 1.0.0
  *
- * @package WP2FA
+ * @package extend-2fa-methods
  */
 if ( ! class_exists( '\WP2FA\Methods\Backup_Method' ) ) {
 	/**
@@ -171,7 +171,7 @@ if ( ! class_exists( '\WP2FA\Methods\Backup_Method' ) ) {
 		 * @since 1.0.0
 		 */
 		public static function get_translated_name(): string {
-			return esc_html__( 'Backup codes', 'wp-2fa' );
+			return esc_html__( 'Backup codes', 'extend-2fa-methods' );
 		}
 
 		/**
@@ -222,7 +222,7 @@ if ( ! class_exists( '\WP2FA\Methods\Backup_Method' ) ) {
 				array(
 					self::METHOD_NAME => array(
 						'wizard-step' => '2fa-wizard-config-backup-method',
-						'button_name' => esc_html__( 'Login with a backup method', 'wp-2fa' ),
+						'button_name' => esc_html__( 'Login with a backup method', 'extend-2fa-methods' ),
 					),
 				)
 			);
@@ -498,7 +498,7 @@ if ( ! class_exists( '\WP2FA\Methods\Backup_Method' ) ) {
 			$nonce     = sanitize_text_field( $get_array['wp_2fa_nonce'] );
 
 			if ( ! wp_verify_nonce( $nonce, 'wp-2fa-remove-user-backup-method-nonce' ) ) {
-				exit( esc_html__( 'Nonce verification failed.', 'wp-2fa' ) );
+				exit( esc_html__( 'Nonce verification failed.', 'extend-2fa-methods' ) );
 			}
 
 			if ( isset( $get_array['user_id'] ) ) {

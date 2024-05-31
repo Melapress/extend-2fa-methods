@@ -1,11 +1,11 @@
 <?php
 /**
- * Responsible for WP2FA user's Email manipulation.
+ * Responsible for Main method user interaction.
  *
- * @package    wp2fa
+ * @package    extend-2fa-methods
  * @subpackage methods-wizard
  * @since      1.0.0
- * @copyright  %%YEAR%% Melapress
+ * @copyright  2024 Melapress
  * @license    https://www.apache.org/licenses/LICENSE-2.0 Apache License 2.0
  *
  * @see       https://wordpress.org/plugins/wp-2fa/
@@ -28,11 +28,11 @@ use WP2FA\Extensions\RoleSettings\Role_Settings_Controller;
  *
  * @since 1.0.0
  *
- * @package WP2FA
+ * @package extend-2fa-methods
  */
 if ( ! class_exists( '\WP2FA\Methods\Wizards\Main_Method_Wizard_Steps' ) ) {
 	/**
-	 * Email code class, for handling method code generation and such.
+	 * Main method interface code class.
 	 *
 	 * @since 1.0.0
 	 */
@@ -91,10 +91,10 @@ if ( ! class_exists( '\WP2FA\Methods\Wizards\Main_Method_Wizard_Steps' ) ) {
 			\ob_start();
 			?>
 			<div class="option-pill">
-				<h3><?php echo \esc_html__( 'Setting up Main Method Example', 'wp-2fa' ); ?></h3>
-				<p><?php echo \esc_html__( 'This is an intro text for the user', 'wp-2fa' ); ?></p>
+				<h3><?php echo \esc_html__( 'Setting up Main Method Example', 'extend-2fa-methods' ); ?></h3>
+				<p><?php echo \esc_html__( 'This is an intro text for the user', 'extend-2fa-methods' ); ?></p>
 				<div class="wp2fa-setup-actions">
-					<a class="button button-primary wp-2fa-button-primary" data-name="next_step_setting_modal_wizard" data-user-id="<?php echo esc_attr( User_Helper::get_user_object()->ID ); ?>" data-next-step="2fa-wizard-<?php echo \esc_attr( self::get_main_class()::get_method_name() ); ?>"><?php esc_html_e( 'Change Main Method Example', 'wp-2fa' ); ?></a>
+					<a class="button button-primary wp-2fa-button-primary" data-name="next_step_setting_modal_wizard" data-user-id="<?php echo esc_attr( User_Helper::get_user_object()->ID ); ?>" data-next-step="2fa-wizard-<?php echo \esc_attr( self::get_main_class()::get_method_name() ); ?>"><?php esc_html_e( 'Change Main Method Example', 'extend-2fa-methods' ); ?></a>
 				</div>
 			</div>
 			<?php
@@ -126,7 +126,7 @@ if ( ! class_exists( '\WP2FA\Methods\Wizards\Main_Method_Wizard_Steps' ) ) {
 					<div class="option-pill">
 						<label for="<?php echo \esc_attr( self::get_main_class()::get_method_name() ); ?>">
 							<input id="<?php echo \esc_attr( self::get_main_class()::get_method_name() ); ?>" name="wp_2fa_enabled_methods" type="radio" value="<?php echo \esc_attr( self::get_main_class()::get_method_name() ); ?>">
-						<?php \esc_html_e( 'Main method Example', 'wp-2fa' ); ?>
+						<?php \esc_html_e( 'Main method Example', 'extend-2fa-methods' ); ?>
 						</label>
 					</div>
 				<?php
@@ -181,12 +181,12 @@ if ( ! class_exists( '\WP2FA\Methods\Wizards\Main_Method_Wizard_Steps' ) ) {
 						<?php } ?>
 						>
 						<?php
-						esc_html_e( 'Example Main Method', 'wp-2fa' );
+						esc_html_e( 'Example Main Method', 'extend-2fa-methods' );
 						?>
 					</label>
 					<?php
 					if ( $setup_wizard ) {
-						echo '<p class="description">' . esc_html__( 'This is an example only.', 'wp-2fa' ) . '</p>';
+						echo '<p class="description">' . esc_html__( 'This is an example only.', 'extend-2fa-methods' ) . '</p>';
 					}
 					?>
 					<?php
@@ -223,13 +223,13 @@ if ( ! class_exists( '\WP2FA\Methods\Wizards\Main_Method_Wizard_Steps' ) ) {
 				<fieldset>
 					<div class="step-setting-wrapper active">
 						<div class="mb-20">
-							<h3><?php echo \esc_html__( 'Setting up Main Method Example', 'wp-2fa' ); ?></h3>
-							<p><?php echo \esc_html__( 'This is an intro text for the user', 'wp-2fa' ); ?></p>
+							<h3><?php echo \esc_html__( 'Setting up Main Method Example', 'extend-2fa-methods' ); ?></h3>
+							<p><?php echo \esc_html__( 'This is an intro text for the user', 'extend-2fa-methods' ); ?></p>
 						</div>
 
 						<div class="wp2fa-setup-actions">
-							<button class="button button-primary wp-2fa-button-primary" data-confirm-main-method-ajax name="next_step_setting_confirm" value="<?php esc_attr_e( 'I\'m Ready', 'wp-2fa' ); ?>" data-user-id="<?php echo esc_attr( User_Helper::get_user_object()->ID ); ?>" <?php echo WP_Helper::create_data_nonce( 'nonce' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?> type="button"><?php esc_html_e( 'I\'m Ready', 'wp-2fa' ); ?></button>
-							<a class="button button-primary wp-2fa-button-primary modal_cancel"><?php esc_attr_e( 'Cancel', 'wp-2fa' ); ?></a>
+							<button class="button button-primary wp-2fa-button-primary" data-confirm-main-method-ajax name="next_step_setting_confirm" value="<?php esc_attr_e( 'I\'m Ready', 'extend-2fa-methods' ); ?>" data-user-id="<?php echo esc_attr( User_Helper::get_user_object()->ID ); ?>" <?php echo WP_Helper::create_data_nonce( 'nonce' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?> type="button"><?php esc_html_e( 'I\'m Ready', 'extend-2fa-methods' ); ?></button>
+							<a class="button button-primary wp-2fa-button-primary modal_cancel"><?php esc_attr_e( 'Cancel', 'extend-2fa-methods' ); ?></a>
 						</div>
 					</div>
 					<script>
@@ -306,7 +306,7 @@ if ( ! class_exists( '\WP2FA\Methods\Wizards\Main_Method_Wizard_Steps' ) ) {
 			if ( self::get_main_class()::get_method_name() === $provider ) {
 
 				?>
-				<p style="margin-bottom: 3em;"><?php echo \esc_html__( 'Thank you for using the example method to login.', 'wp-2fa' ); ?></p>
+				<p style="margin-bottom: 3em;"><?php echo \esc_html__( 'Thank you for using the example method to login.', 'extend-2fa-methods' ); ?></p>
 				<hr style="margin-bottom: 3em;" />
 				<?php
 				// Include submit_button function and set the submit button show to true - your method may not need that. Changes based on your needs.

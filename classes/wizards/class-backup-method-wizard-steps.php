@@ -1,11 +1,11 @@
 <?php
 /**
- * Responsible for WP2FA user's Email manipulation.
+ * Responsible for Backup Method user interaction.
  *
- * @package    wp2fa
+ * @package    extend-2fa-methods
  * @subpackage methods-wizard
  * @since      1.0.0
- * @copyright  %%YEAR%% Melapress
+ * @copyright  2024 Melapress
  * @license    https://www.apache.org/licenses/LICENSE-2.0 Apache License 2.0
  *
  * @see       https://wordpress.org/plugins/wp-2fa/
@@ -30,11 +30,11 @@ use WP2FA\Extensions\RoleSettings\Role_Settings_Controller;
  *
  * @since 1.0.0
  *
- * @package WP2FA
+ * @package extend-2fa-methods
  */
 if ( ! class_exists( '\WP2FA\Methods\Wizards\Backup_Method_Wizard_Steps' ) ) {
 	/**
-	 * Email code class, for handling method code generation and such.
+	 * Backup method class.
 	 *
 	 * @since 1.0.0
 	 */
@@ -84,19 +84,19 @@ if ( ! class_exists( '\WP2FA\Methods\Wizards\Backup_Method_Wizard_Steps' ) ) {
 			?>
 			<div class="wizard-step" id="wizard-backup-method-selected">
 				<div class="option-pill">
-					<?php esc_html_e( 'Backup Method', 'wp-2fa' ); ?>
+					<?php esc_html_e( 'Backup Method', 'extend-2fa-methods' ); ?>
 				</div>
 				<div class="option-pill">
 					<label for="use_wp_email_as_backup">
-						<span><?php esc_html_e( 'Enable backup method', 'wp-2fa' ); ?></span>
+						<span><?php esc_html_e( 'Enable backup method', 'extend-2fa-methods' ); ?></span>
 					</label>
 				</div>
 				<div class="wp2fa-setup-actions">
-					<button class="button button-primary wp-2fa-button-primary" name="next_step_setting" value="<?php esc_attr_e( 'Save email backup options', 'wp-2fa' ); ?>" data-trigger-save-backup-method <?php echo WP_Helper::create_data_nonce( self::json_nonce() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?> data-user-id="<?php echo esc_attr( User_Helper::get_user_object()->ID ); ?>">
-						<?php esc_html_e( 'Save 2FA backup method', 'wp-2fa' ); ?>
+					<button class="button button-primary wp-2fa-button-primary" name="next_step_setting" value="<?php esc_attr_e( 'Save email backup options', 'extend-2fa-methods' ); ?>" data-trigger-save-backup-method <?php echo WP_Helper::create_data_nonce( self::json_nonce() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?> data-user-id="<?php echo esc_attr( User_Helper::get_user_object()->ID ); ?>">
+						<?php esc_html_e( 'Save 2FA backup method', 'extend-2fa-methods' ); ?>
 					</button>
 					<a href="<?php echo esc_url( $redirect ); ?>" class="button button-secondary wp-2fa-button-secondary close-first-time-wizard">
-							<?php esc_html_e( 'Close wizard', 'wp-2fa' ); ?>
+							<?php esc_html_e( 'Close wizard', 'extend-2fa-methods' ); ?>
 					</a>
 				</div>
 			</div>
@@ -123,14 +123,14 @@ if ( ! class_exists( '\WP2FA\Methods\Wizards\Backup_Method_Wizard_Steps' ) ) {
 
 				require_once ABSPATH . '/wp-admin/includes/template.php';
 				?>
-                    <p><?php esc_html_e( 'Login:', 'wp-2fa' ); // phpcs:ignore?></p><br/>
+					<p><?php esc_html_e( 'Login:', 'extend-2fa-methods' ); ?>></p><br/>
 					
 				<?php
 			}
 		}
 
 		/**
-		 * Generates link for the email backup.
+		 * Generates link for the backup method.
 		 *
 		 * @param \WP_User $user        - The user for which we need to create backup method link.
 		 * @param string   $provider    - The name of the current provider - add link only if it is not this provider.
@@ -158,7 +158,7 @@ if ( ! class_exists( '\WP2FA\Methods\Wizards\Backup_Method_Wizard_Steps' ) ) {
 				<div class="backup-methods-wrap">
 					<p class="backup-methods">
 						<a href="<?php echo esc_url( $login_url ); ?>">
-							<?php esc_html_e( 'Or, log me in with backup method.', 'wp-2fa' ); ?>
+							<?php esc_html_e( 'Or, log me in with backup method.', 'extend-2fa-methods' ); ?>
 						</a>
 					</p>
 				</div>
@@ -213,7 +213,7 @@ if ( ! class_exists( '\WP2FA\Methods\Wizards\Backup_Method_Wizard_Steps' ) ) {
 					<?php checked( $enabled_settings, self::get_main_class()::SETTINGS_NAME ); ?>
 				<?php } ?>
 				/>
-					<?php esc_html_e( 'Allow users to use backup method', 'wp-2fa' ); ?>
+					<?php esc_html_e( 'Allow users to use backup method', 'extend-2fa-methods' ); ?>
 			</label>
 			<?php
 		}
@@ -229,19 +229,19 @@ if ( ! class_exists( '\WP2FA\Methods\Wizards\Backup_Method_Wizard_Steps' ) ) {
 			if ( Settings::get_role_or_default_setting( self::get_main_class()::SETTINGS_NAME, User_Helper::get_user_object(), null, true ) ) {
 				$on_click = 'backupMethodConfigure();';
 
-				$mail_label = __( 'Configure backup method', 'wp-2fa' );
+				$mail_label = __( 'Configure backup method', 'extend-2fa-methods' );
 				if ( self::get_main_class()::is_enabled_for_user( User_Helper::get_user_object() ) ) {
-					$mail_label = __( 'Remove backup method', 'wp-2fa' );
+					$mail_label = __( 'Remove backup method', 'extend-2fa-methods' );
 
 					$on_click = 'MicroModal.show(\'confirm-remove-backup-method\')';
 
 					echo Generate_Modal::generate_modal( // phpcs:ignore
 						'confirm-remove-backup-method',
-						__( 'Remove Backup Method?', 'wp-2fa' ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-						__( 'Are you sure you want to remove the backup method?', 'wp-2fa' ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+						__( 'Remove Backup Method?', 'extend-2fa-methods' ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+						__( 'Are you sure you want to remove the backup method?', 'extend-2fa-methods' ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 						array(
-							'<a href="#" class="button wp-2fa-button-primary button-confirm" data-trigger-remove-backup-method ' . WP_Helper::create_data_nonce( 'wp-2fa-remove-user-backup-method-nonce' ) . ' data-user-id="' . User_Helper::get_user()->ID . '">' . \esc_html__( 'Yes', 'wp-2fa' ) . '</a>', // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-						'<button class="button wp-2fa-button-secondary button-decline" data-close-2fa-modal aria-label="Close this dialog window">' . \esc_html__( 'No', 'wp-2fa' ) . '</button>',
+							'<a href="#" class="button wp-2fa-button-primary button-confirm" data-trigger-remove-backup-method ' . WP_Helper::create_data_nonce( 'wp-2fa-remove-user-backup-method-nonce' ) . ' data-user-id="' . User_Helper::get_user()->ID . '">' . \esc_html__( 'Yes', 'extend-2fa-methods' ) . '</a>', // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+						'<button class="button wp-2fa-button-secondary button-decline" data-close-2fa-modal aria-label="Close this dialog window">' . \esc_html__( 'No', 'extend-2fa-methods' ) . '</button>',
 						)
 					);
 				}
@@ -253,7 +253,7 @@ if ( ! class_exists( '\WP2FA\Methods\Wizards\Backup_Method_Wizard_Steps' ) ) {
 		}
 
 		/**
-		 * Shows the backup email settings wizard JS.
+		 * Shows the backup method settings wizard JS.
 		 *
 		 * @return void
 		 *
