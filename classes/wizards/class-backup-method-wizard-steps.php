@@ -123,8 +123,8 @@ if ( ! class_exists( '\WP2FA\Methods\Wizards\Backup_Method_Wizard_Steps' ) ) {
 
 				require_once ABSPATH . '/wp-admin/includes/template.php';
 				?>
-					<p><?php esc_html_e( 'Login:', 'extend-2fa-methods' ); ?>></p><br/>
-					
+					<p><?php esc_html_e( 'Login:', 'extend-2fa-methods' ); ?></p><br/>
+					<p style="padding-bottom: 20px;"><?php esc_html_e( 'Check the backup method challenge or show login button and let the user in', 'extend-2fa-methods' ); ?></p> 
 				<?php
 			}
 		}
