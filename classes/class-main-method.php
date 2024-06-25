@@ -157,11 +157,6 @@ if ( ! class_exists( '\WP2FA\Methods\Main_Method' ) ) {
 		 */
 		public static function settings_loop( array $loop_settings ) {
 			array_push( $loop_settings, self::POLICY_SETTINGS_NAME );
-			array_push( $loop_settings, 'specify-email_hotp' );
-
-			/* @premium:start */
-			array_push( $loop_settings, 'email-code-period' );
-			/* @premium:end */
 
 			return $loop_settings;
 		}

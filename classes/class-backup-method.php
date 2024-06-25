@@ -54,7 +54,7 @@ if ( ! class_exists( '\WP2FA\Methods\Backup_Method' ) ) {
 		 *
 		 * @since 1.0.0
 		 */
-		public const SETTINGS_NAME = 'enable_backup_method';
+		public const POLICY_SETTINGS_NAME = 'enable_backup_method';
 
 		/**
 		 * The name of the method.
@@ -82,7 +82,7 @@ if ( ! class_exists( '\WP2FA\Methods\Backup_Method' ) ) {
 		 * @since 1.0.0
 		 */
 		private static $settings = array(
-			self::SETTINGS_NAME => 'yes',
+			self::POLICY_SETTINGS_NAME => 'yes',
 		);
 
 		/**
@@ -369,7 +369,7 @@ if ( ! class_exists( '\WP2FA\Methods\Backup_Method' ) ) {
 		 * @since 1.0.0
 		 */
 		public static function get_settings_name(): string {
-			return \array_key_first( self::$settings );
+			return self::POLICY_SETTINGS_NAME;
 		}
 
 		/**

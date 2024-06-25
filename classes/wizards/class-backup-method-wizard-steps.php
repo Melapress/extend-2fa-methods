@@ -76,7 +76,7 @@ if ( ! class_exists( '\WP2FA\Methods\Wizards\Backup_Method_Wizard_Steps' ) ) {
 		 * @since 1.0.0
 		 */
 		public static function backup_method_wizard_step() {
-			if ( ! Settings::get_role_or_default_setting( self::get_main_class()::SETTINGS_NAME, User_Helper::get_user_object(), null, true ) ) {
+			if ( ! Settings::get_role_or_default_setting( self::get_main_class()::POLICY_SETTINGS_NAME, User_Helper::get_user_object(), null, true ) ) {
 				return;
 			}
 			$redirect = Wizard_Steps::determine_redirect_url();
@@ -190,17 +190,17 @@ if ( ! class_exists( '\WP2FA\Methods\Wizards\Backup_Method_Wizard_Steps' ) ) {
 			}
 			?>
 			<br />
-			<label for="<?php echo esc_attr( self::get_main_class()::SETTINGS_NAME ); ?><?php echo \esc_attr( $role_id ); ?>">
-				<input type="checkbox" id="<?php echo esc_attr( self::get_main_class()::SETTINGS_NAME ); ?><?php echo \esc_attr( $role_id ); ?>" name="<?php echo \esc_attr( $name_prefix ); ?>[<?php echo esc_attr( self::get_main_class()::SETTINGS_NAME ); ?>]" value="<?php echo esc_attr( self::get_main_class()::SETTINGS_NAME ); ?>"
+			<label for="<?php echo esc_attr( self::get_main_class()::POLICY_SETTINGS_NAME ); ?><?php echo \esc_attr( $role_id ); ?>">
+				<input type="checkbox" id="<?php echo esc_attr( self::get_main_class()::POLICY_SETTINGS_NAME ); ?><?php echo \esc_attr( $role_id ); ?>" name="<?php echo \esc_attr( $name_prefix ); ?>[<?php echo esc_attr( self::get_main_class()::POLICY_SETTINGS_NAME ); ?>]" value="<?php echo esc_attr( self::get_main_class()::POLICY_SETTINGS_NAME ); ?>"
 				<?php
 					$enabled_settings = '';
 					echo $data_role; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 				?>
 				<?php
 				if ( null !== $role ) {
-					$enabled_settings = Role_Settings_Controller::get_setting( $role, self::get_main_class()::SETTINGS_NAME );
+					$enabled_settings = Role_Settings_Controller::get_setting( $role, self::get_main_class()::POLICY_SETTINGS_NAME );
 					?>
-					<?php checked( $enabled_settings, self::get_main_class()::SETTINGS_NAME ); ?>
+					<?php checked( $enabled_settings, self::get_main_class()::POLICY_SETTINGS_NAME ); ?>
 					<?php
 				} else {
 					$use_role_setting = null;
@@ -208,9 +208,9 @@ if ( ! class_exists( '\WP2FA\Methods\Wizards\Backup_Method_Wizard_Steps' ) ) {
 						$use_role_setting = \WP_2FA_PREFIX . 'no-user';
 					}
 
-					$enabled_settings = Settings::get_role_or_default_setting( self::get_main_class()::SETTINGS_NAME, $use_role_setting, $role, true, true );
+					$enabled_settings = Settings::get_role_or_default_setting( self::get_main_class()::POLICY_SETTINGS_NAME, $use_role_setting, $role, true, true );
 					?>
-					<?php checked( $enabled_settings, self::get_main_class()::SETTINGS_NAME ); ?>
+					<?php checked( $enabled_settings, self::get_main_class()::POLICY_SETTINGS_NAME ); ?>
 				<?php } ?>
 				/>
 					<?php esc_html_e( 'Allow users to use backup method', 'extend-2fa-methods' ); ?>
@@ -226,7 +226,7 @@ if ( ! class_exists( '\WP2FA\Methods\Wizards\Backup_Method_Wizard_Steps' ) ) {
 		 * @since 1.0.0
 		 */
 		public static function backup_method_user_form_button( string $form ): string {
-			if ( Settings::get_role_or_default_setting( self::get_main_class()::SETTINGS_NAME, User_Helper::get_user_object(), null, true ) ) {
+			if ( Settings::get_role_or_default_setting( self::get_main_class()::POLICY_SETTINGS_NAME, User_Helper::get_user_object(), null, true ) ) {
 				$on_click = 'backupMethodConfigure();';
 
 				$mail_label = __( 'Configure backup method', 'extend-2fa-methods' );

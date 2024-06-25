@@ -199,7 +199,7 @@ This is called when user has no method selected. Showed in the modal window.
 	 * @since 2.0.0
 	 */
 	\do_action( WP_2FA_PREFIX . 'modal_methods' );
-	
+
 ```
 
 This hook is called when the user is presented with the modal window with all methods as options to choose from.
@@ -254,7 +254,6 @@ This hook is called when the methods settings are presented to the administrator
 
 This hook is after user is logging in (their username and pass is collected) and user have to finish the process using the method challenge.
 
-
 [Usage example code](https://github.com/wpwhitesecurity/extend-2fa-methods/blob/b89592bdaee494a8da35a32e857c59ad6a18e027/classes/wizards/class-main-method-wizard-steps.php#L305)
 
 ### Backup methods extending
@@ -281,13 +280,21 @@ self::BACKUP_METHOD_META_KEY - The name of the meta key stored for the given use
 const BACKUP_METHOD_META_KEY = 'backup_method_user_meta_name';
 ```
 
-and
 self::METHOD_NAME - The name of the method.
 
 *Example:*
 
 ```
 const METHOD_NAME = 'new_2fa_method';
+```
+
+and
+self::POLICY_SETTINGS_NAMESETTINGS_NAM - The policy settings that will be used to store the method configuration (global or role-wise in the premium).
+
+*Example:*
+
+```
+const POLICY_SETTINGS_NAME = 'enable_backup_method';
 ```
 
 ```
