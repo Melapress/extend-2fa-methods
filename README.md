@@ -1,43 +1,89 @@
-# WP 2FA by WP White Security
+# WP 2FA by Melapress<!-- omit from toc -->
 
 Easy to use two-factor authentication for your WordPress logins.
 
-https://wordpress.org/plugins/wp-2fa/
+https://melapress.com/wordpress-2fa/
 
-# Extending 2FA methods documentation & information
+## How to add supplementary 2FA methods: Documentation and information<!-- omit from toc -->
 
-### Primary methods extending
+WP 2FA offers several 2FA methods straight out of the box, including:
 
-In order to create a new primary method in WP2FA you need the following:
+* TOTP 
+* Email HOTP
+* Email link
+* SMS (via a number of third-party services)
+* Push notifications (via a third-party service)
 
-*Note:*: important note about the naming convention used in this document - **method**, **provider** and **extension** meaning the same thing.
+It also offers a selection of secondary authentication methods, which are used as a backup method should the primary method become unavailable (such as the user’s phone running out of battery).
 
-A new class with the namespace starting with `\WP2FA\Methods`
-The method should have unique slug which can be used to separate it from other methods. If that slug is in use, the last added method with given slug will take precedence.
+Using the documentation presented below, you can add your own primary and secondary authentication methods. Whether you are looking to offer users more methods or integrate methods you already use within your organization, this documentation will help you get there.
 
-and implementing the following methods:
+## Table of contents<!-- omit from toc -->
 
-static method named `init` responsible for initializing all of the hooks for proper method workflow.
+- [About this documentation](#about-this-documentation)
+- [Adding supplementary primary 2FA methods](#adding-supplementary-primary-2fa-methods)
+	- [Implementation](#implementation)
+		- [Add a translatable name](#add-a-translatable-name)
+		- [Add the method to the global providers/methods supported by the plugin](#add-the-method-to-the-global-providersmethods-supported-by-the-plugin)
+		- [Add the method's default settings to the main plugin settings](#add-the-methods-default-settings-to-the-main-plugin-settings)
+		- [Add extension settings to the loop array](#add-extension-settings-to-the-loop-array)
+		- [Set the default policy for the given method](#set-the-default-policy-for-the-given-method)
+	- [Wizard filters and hooks](#wizard-filters-and-hooks)
+		- [methods\_modal\_options](#methods_modal_options)
+		- [modal\_methods](#modal_methods)
+		- [methods\_re\_configure](#methods_re_configure)
+		- [methods\_settings](#methods_settings)
+		- [login\_form](#login_form)
+	- [Adding supplementary 2FA backup methods](#adding-supplementary-2fa-backup-methods)
+	- [Implementation](#implementation-1)
+	- [Implementing hooks](#implementing-hooks)
+		- [add\_backup\_method](#add_backup_method)
+		- [check\_backup\_method\_for\_role](#check_backup_method_for_role)
+		- [remove\_backup\_methods\_for\_user](#remove_backup_methods_for_user)
+		- [settings\_loop](#settings_loop)
+		- [add\_default\_settings](#add_default_settings)
+		- [add\_provider](#add_provider)
+		- [name\_translated](#name_translated)
+		- [is\_secondary](#is_secondary)
+		- [backup\_method\_report\_settings](#backup_method_report_settings)
+		- [meta\_user\_backup\_method](#meta_user_backup_method)
+	- [Add methods to the plugin](#add-methods-to-the-plugin)
 
-The method must implement the following methods hooks (this is an example code, you can have this implemented wherever you like as long as they are accessible for the PHP and WP):
 
-The code below will presume you have the following set (you can achieve this the way you prefer):
-self::POLICY_SETTINGS_NAME - The name of the policy setting that will be used to enable disable the method.
+## About this documentation
 
-*Example:*
+This documentation is split into two parts. The first part explains how to add primary methods, while the second part explains how to add secondary (backup) methods.
 
-```
-const POLICY_SETTINGS_NAME = 'enable_method';
-```
+**Note**: For the purposes of this document, the following definitions apply:
 
-and
-self::METHOD_NAME - The name of the method.
+* **Provider**: This is the 2FA service provider. For example, Authy.
+* **Method**: This is the custom extension that you develop which will integrate with WP 2FA. For example: My 2FA Method.
+* **Extension**: This is the 2FA method that the user can choose when configuring 2FA. For example, Push notification.
 
-*Example:*
+Do note that the names have no bearing on the functionality and as such, you can choose whichever names suit your requirements.
 
-```
-const METHOD_NAME = 'new_2fa_method';
-```
+## Adding supplementary primary 2FA methods
+
+To create a new primary 2FA method in WP 2FA, you will need the following:
+
+A new class with a namespace that starts with \WP2FA\Methods. The method should have a unique slug that can be used to separate it from other methods. If the given slug is in use, the last added method will take precedence.
+
+This new class will implement the following methods:
+
+`init`: a static method responsible for initializing all of the hooks for proper method workflow
+
+- self::POLICY_SETTINGS_NAME: Where POLICY_SETTINGS_NAME is the name of the policy setting that will be used to store the method’s configuration. Usage: const POLICY_SETTINGS_NAME = 'enable_method';
+
+- self::METHOD_NAME: Where METHOD_NAME is the name of the method’s slug. Usage: const METHOD_NAME = 'new_2fa_method';
+
+The `init` method is used to implement both self::POLICY_SETTINGS_NAME and self::METHOD_NAME, both of which need to be accessible by PHP and WordPress.
+
+### Implementation
+
+The WP 2FA uses methods within a class to implement the hooks needed to achieve the required functionality. As a developer, you can implement these as they best fit your requirements.
+
+Below is a sample implementation:
+
 
 ```
 	\add_filter( WP_2FA_PREFIX . 'providers_translated_names', array( __CLASS__, 'name_translated' ) );
@@ -63,13 +109,15 @@ const METHOD_NAME = 'new_2fa_method';
 	);
 ```
 
-Following is more detailed explanation of every hook and its code implementation
+In the next section, we will look at all available hooks in more detail, including their code implementation.
+
+#### Add a translatable name
 
 ```
 	/**
-	 * Adds translatable name
-	 * Receives an array with all of the registered methods / providers.
-	 * Using this you can add translatable name of your method to the global methods array supported by the plugin.
+	 * This hook adds a translatable name
+	 * It receives an array with all of the registered methods/providers.
+	 * When using this hook, you can add a translatable name of your method to the global methods array supported by the plugin.
 	 *
 	 * @param array $providers - Array with all currently supported providers and their translated names.
 	 *
@@ -83,11 +131,12 @@ Following is more detailed explanation of every hook and its code implementation
 		return $providers;
 	}
 ```
+#### Add the method to the global providers/methods supported by the plugin
 
 ```
 	/**
-	 * Adds the method to the global providers / methods supported by the plugin.
-	 * Receives array with all of the registered methods, use it to add / register your method giving its slug
+	 * This hook adds the method to the global providers/methods supported by the plugin.
+	 * It receives an array with all of the registered methods. Use it to add/register your method, giving its slug
 	 *
 	 * @param array $providers - Array with all currently supported providers.
 	 *
@@ -101,12 +150,13 @@ Following is more detailed explanation of every hook and its code implementation
 		return $providers;
 	}
 ```
+#### Add the method's default settings to the main plugin settings
 
 ```
 	/**
-	 * Adds the method default settings to the main plugin settings.
-	 * Receives array with all of the (currently) registered settings, and gives the ability for the method to add its own settings to global array.
-	 * Use this method to add the settings default values your method needs, that way the plugin will take care of fall back the them if nothing is explicitly set.
+	 * This hook adds the method default settings to the main plugin settings.
+	 * It receives an array with all of the (currently) registered settings, and provides the ability for the method to add its own settings to global array.
+	 * Use this method to add the settings' default values your method needs. This way, the plugin will handle fallback if nothing is explicitly set.
 	 *
 	 * @param array $default_settings - Array with method default settings.
 	 *
@@ -120,14 +170,15 @@ Following is more detailed explanation of every hook and its code implementation
 		return $default_settings;
 	}
 ```
+#### Add extension settings to the loop array
 
 ```
 	/**
-	 * Add extension settings to the loop array.
-	 * Plugin is using the method policy settings - these are settings related to the user specific iteration with the given method. These are shown in the policy settings screen of the plugin and related to users and (in paid version) user roles.
-	 * Using these settings the admin can enable / disable the plugin, set additional options or remove them.
-	 * This only sets names of the policy settings, there is no need to provide values for them - plugin will check for these settings names when settings are saved, and if found, the proper values will be stored against given names.
-	 * Don't forget to use unique names there as well.
+	 * This hook adds the extension settings to the loop array.
+	 * WP 2FA uses policies to apply user settings, which apply to the user-specific iteration within the given method. You can view these settings in WP 2FA’s policy settings screen as related to users and, in the paid version, user roles.
+	 * By using these settings, you can enable or disable the plugin, set additional options, or remove them.
+	 * This hook only sets the names of the policy settings, and as such, there is no need to provide values. WP 2FA will check for these settings' names when settings are saved, and if found, the proper values will be stored against the given names.
+	 * Don't forget to use unique names here as well.
 	 *
 	 * @param array $loop_settings - Currently available settings array.
 	 *
@@ -141,12 +192,13 @@ Following is more detailed explanation of every hook and its code implementation
 		return $loop_settings;
 	}
 ```
+#### Set the default policy for the given method
 
 ```
 	/**
-	 * The default policy for the given method.
-	 * Sometimes plugin may need to know the default configuration for the methods (user tries to disable all methods, there are no methods setting etc.)
-	 * That gives the ability to decide should the method be enabled or disabled by default in policy settings page.
+	 * This hook sets the default policy for the given method.
+	 * Sometimes WP 2FA may need to know the default configuration for the methods, such as when a user tries to disable all methods, settings, etc.
+	 * This allows you to decide whether the method should be enabled or disabled by default on the policy settings page.
 	 *
 	 * @param array $output - The array with output values.
 	 *
@@ -162,7 +214,7 @@ Following is more detailed explanation of every hook and its code implementation
 	}
 ```
 
-Main methods also include interface methods achieved by implementing wizard steps class. It has access to the following hooks:
+Main methods also include interface methods, which can be added by implementing the wizard steps class. They have access to the following hooks:
 
 ```
 	\add_filter( WP_2FA_PREFIX . 'methods_modal_options', array( __CLASS__, 'main_method_option' ), 10, 2 );
@@ -172,13 +224,16 @@ Main methods also include interface methods achieved by implementing wizard step
 	\add_action( WP_2FA_PREFIX . 'login_form', array( __CLASS__, 'login_form' ), 10, 2 );
 ```
 
-For more compatibility, that class should use `Methods_Wizards_Trait`, which gives the user ability to interact with methods. Proper ordering is one of them.
+For increased compatibility, the class should use the `Methods_Wizards_Trait` method, which gives the user the ability to interact with methods. This includes proper ordering of the methods as they appear to the end user.
 
-#### Filters in wizard
+### Wizard filters and hooks
+
+#### methods_modal_options
+This filter is called when the user has no method selected. Showed in the modal window.
 
 ```
 	/**
-	 * Shows methods in order. Every method is called and its code and order is collected. That is used when there are no methods selected from the user.
+	 * Shows all 2FA methods in order. Every method is called, and its code and order are collected. This filter is used when the user has not selected any 2FA methods.
 	 *
 	 * @param array - All the collected methods and their order.
 	 * @param string $role - The role of the current user
@@ -188,9 +243,10 @@ For more compatibility, that class should use `Methods_Wizards_Trait`, which giv
 	\apply_filters( WP_2FA_PREFIX . 'methods_modal_options', array(), $role );
 ```
 
-This is called when user has no method selected. Showed in the modal window.
-
 [Usage example code](https://github.com/wpwhitesecurity/extend-2fa-methods/blob/b89592bdaee494a8da35a32e857c59ad6a18e027/classes/wizards/class-main-method-wizard-steps.php#L122)
+
+#### modal_methods
+This hook is called when the user is presented with the modal window with all methods as available options.
 
 ```
 	/**
@@ -202,13 +258,14 @@ This is called when user has no method selected. Showed in the modal window.
 
 ```
 
-This hook is called when the user is presented with the modal window with all methods as options to choose from.
-
 [Usage example code](https://github.com/wpwhitesecurity/extend-2fa-methods/blob/b89592bdaee494a8da35a32e857c59ad6a18e027/classes/wizards/class-main-method-wizard-steps.php#L216)
+
+#### methods_re_configure
+This hook is called when the user chooses to reconfigure their 2FA method (switch to a different method or update the current one).
 
 ```
 	/**
-	 * Option to re-configure the methods - all the methods are called and their order and code is collected. Then the currently selected method is positioned on top and methods are shown in order. That is called in the user profile page.
+	 * Option to re-configure the methods - all the methods are called, and their order and codes are collected. Then the currently selected method is positioned on top, and the remaining methods are shown in order. That is called in the user profile page.
 	 *
 	 * @param array - All the collected methods and their order.
 	 * @param string $role - The role of the current user
@@ -218,13 +275,14 @@ This hook is called when the user is presented with the modal window with all me
 	\apply_filters( WP_2FA_PREFIX . 'methods_re_configure', array(), $role );
 ```
 
-This hook is called when user decides to re-configure (switch to another or update the current one) method.
-
 [Usage example code](https://github.com/wpwhitesecurity/extend-2fa-methods/blob/b89592bdaee494a8da35a32e857c59ad6a18e027/classes/wizards/class-main-method-wizard-steps.php#L86)
+
+#### methods_settings
+This hook is called when the method's settings are presented to the administrator.
 
 ```
 	/**
-	 * Shows methods in order. Every method is called and its code and order is collected. Used in the wizards.
+	 * Shows all 2FA methods in order. Every method is called, and its code and order are collected. This hook is used in the wizards.
 	 *
 	 * @param array - All the collected methods and their order.
 	 * @param bool - Is that a setup wizard call or not?
@@ -236,9 +294,10 @@ This hook is called when user decides to re-configure (switch to another or upda
 	\apply_filters( WP_2FA_PREFIX . 'methods_settings', array(), $setup_wizard, $data_role, $role );
 ```
 
-This hook is called when the methods settings are presented to the administrator.
-
 [Usage example code](https://github.com/wpwhitesecurity/extend-2fa-methods/blob/b89592bdaee494a8da35a32e857c59ad6a18e027/classes/wizards/class-main-method-wizard-steps.php#L154)
+
+#### login_form
+This hook is used after the user completes their first authentication method using their username and password. It forces the user to finish the login process using the 2FA method challenge.
 
 ```
 	/**
@@ -252,50 +311,31 @@ This hook is called when the methods settings are presented to the administrator
 	do_action( WP_2FA_PREFIX . 'login_form', $user, $provider );
 ```
 
-This hook is after user is logging in (their username and pass is collected) and user have to finish the process using the method challenge.
-
 [Usage example code](https://github.com/wpwhitesecurity/extend-2fa-methods/blob/b89592bdaee494a8da35a32e857c59ad6a18e027/classes/wizards/class-main-method-wizard-steps.php#L305)
 
-### Backup methods extending
+### Adding supplementary 2FA backup methods
 
-In order to create a new backup method in WP2FA you need the following:
+Backup 2FA methods enable users to use 2FA even if their primary 2FA method becomes unavailable (such as if their phone runs out of battery. By configuring a backup 2FA method, you can ensure users are still able to safely log in to WordPress without requiring the help of your support team.
 
-*Note:*: important note about the naming convention used in this document - **method**, **provider** and **extension** meaning the same thing.
+To create a new secondary 2FA method in WP 2FA, you will need the following:
 
-A new class with the namespace starting with `\WP2FA\Methods`
-The method should have unique slug which can be used to separate it from other methods. If that slug is in use, the last added method with given slug will take precedence.
+A new class with a namespace that starts with `\WP2FA\Methods`. This class should be separate from the primary method class, if this is used. The method should have a unique slug that can be used to separate it from other methods, including the primary method if this is used. If the given slug is in use, the last added method will take precedence.
 
-and implementing the following methods:
+This new class will implement the following methods:
 
-static method named `init` responsible for initializing all of the hooks for proper method workflow.
+`init`: a static method responsible for initializing all of the hooks for proper method workflow
 
-The method must implement the following methods hooks (this is an example code, you can have this implemented wherever you like as long as they are accessible for the PHP and WP):
+- self::BACKUP_METHOD_META_KEY: Where BACKUP_METHOD_META_KEY is the name of the meta key stored for the given user. Usage: const BACKUP_METHOD_META_KEY = 'backup_method_user_meta_name';;
 
-The code below will presume you have the following set (you can achieve this the way you prefer):
-self::BACKUP_METHOD_META_KEY - The name of the meta key stored for the given user.
+- self::POLICY_SETTINGS_NAME - same as the policy settings name in the main method. Usage: const POLICY_SETTINGS_NAME = 'enable_method';
+- self::METHOD_NAME: Where METHOD_NAME is the name of the method. Usage: const METHOD_NAME = 'secondary_2fa_method';
 
-*Example:*
+The `init` method is used to implement both self::BACKUP_METHOD_META_KEY and self::METHOD_NAME, both of which need to be accessible by PHP and WordPress.
 
-```
-const BACKUP_METHOD_META_KEY = 'backup_method_user_meta_name';
-```
+### Implementation
+The WP 2FA uses methods within a class to implement the hooks needed to achieve the required functionality. As a developer, you can implement these as they best fit your requirements.
 
-self::METHOD_NAME - The name of the method.
-
-*Example:*
-
-```
-const METHOD_NAME = 'new_2fa_method';
-```
-
-and
-self::POLICY_SETTINGS_NAMESETTINGS_NAM - The policy settings that will be used to store the method configuration (global or role-wise in the premium).
-
-*Example:*
-
-```
-const POLICY_SETTINGS_NAME = 'enable_backup_method';
-```
+*Below is a sample implementation:*
 
 ```
 	\add_filter( WP_2FA_PREFIX . 'backup_methods_list', array( __CLASS__, 'add_backup_method' ), 10, 2 );
@@ -317,7 +357,12 @@ const POLICY_SETTINGS_NAME = 'enable_backup_method';
 	\add_filter( \WP_2FA_PREFIX . 'backup_methods_report_settings', array( __CLASS__, 'backup_method_report_settings' ) );
 ```
 
-Following is more detailed explanation of every hook and its code implementation
+In the next section, we will look at all available hooks in more detail, including their code implementation.
+
+### Implementing hooks
+
+#### add_backup_method
+This hook adds the backup method to this plugin’s list of backup methods.
 
 ```
 	/**
@@ -349,11 +394,14 @@ Following is more detailed explanation of every hook and its code implementation
 	}
 ```
 
+#### check_backup_method_for_role
+This hook checks if the backup method should be made available to a specific user role.
+
 ```
 	/**
-	 * Changes the user enabled backup methods array - removes the method if it is not enabled.
-	 * That is for role, the user object is used to extract the role.
-	 * UserHelper is a helper class available in 2FA plugin which could be used for role extraction or other user operations.
+	 * Changes the user-enabled backup methods array and removes the method if it is not enabled.
+	 * This hook is used for secondary methods enabled by role. The user object is used to extract the role.
+	 * UserHelper is a helper class available in WP 2FA that can be used for role extraction or other user operations.
 	 *
 	 * @param array    $backup_methods - Array with all backup methods available to user.
 	 * @param \WP_User $user           - User to check for is that method enabled.
@@ -375,6 +423,9 @@ Following is more detailed explanation of every hook and its code implementation
 	}
 ```
 
+#### remove_backup_methods_for_user
+This hook removes specific backup methods for a given user.
+
 ```
 	/**
 	 * Removes the backup method (user meta key) from the database.
@@ -392,13 +443,16 @@ Following is more detailed explanation of every hook and its code implementation
 	}
 ```
 
+#### settings_loop
+This hook passes an array that the method extends with settings values. When the admin clicks the Save button from the UI, the values are checked and then stored.
+
 ```
 	/**
 	 * Add extension settings to the loop array.
-	 * Plugin is using the method policy settings - these are settings related to the user specific iteration with the given method. These are shown in the policy settings screen of the plugin and related to users and (in paid version) user roles.
-	 * Using these settings the admin can enable / disable the plugin, set additional options or remove them.
-	 * This only sets names of the policy settings, there is no need to provide values for them - plugin will check for these settings names when settings are saved, and if found, the proper values will be stored against given names.
-	 * Don't forget to use unique names there as well.
+	 * WP 2FA uses the method policy settings to store settings related to the user-specific iteration with a given method. These are shown in the plugin's policy settings screen and relate to users and (in premium version) user roles.
+	 * By using these settings, the admin can set additional method options, or remove them.
+	 * This only sets the name of the policy settings, there is no need to provide any values as the plugin will check for these settings names when settings are saved, and if found, the proper values will be stored against given names.
+	 * Don't forget to use unique names here as well.
 	 *
 	 * @param array $loop_settings - Currently available settings array.
 	 *
@@ -413,11 +467,14 @@ Following is more detailed explanation of every hook and its code implementation
 	}
 ```
 
+#### add_default_settings
+This hook defines the method’s default settings
+
 ```
 	/**
 	 * Adds the method default settings to the main plugin settings.
-	 * Receives array with all of the (currently) registered settings, and gives the ability for the method to add its own settings to global array.
-	 * Use this method to add the settings default values your method needs, that way the plugin will take care of fall back the them if nothing is explicitly set.
+	 * Receives an array with all of the (currently) registered settings and enables the method to add its own settings to the global array.
+	 * Use this method to define the settings' default values your method will use if nothing is explicitly set.
 	 *
 	 * @param array $default_settings - Array with method default settings.
 	 *
@@ -432,10 +489,13 @@ Following is more detailed explanation of every hook and its code implementation
 	}
 ```
 
+#### add_provider
+This hook adds the provider defined in the method to the list of providers/methods supported by the plugin
+
 ```
 	/**
-	 * Adds the method to the global providers / methods supported by the plugin.
-	 * Receives array with all of the registered methods, use it to add / register your method giving its slug
+	 * Adds the method to the global providers/methods list supported by the plugin.
+	 * Receives array with all of the registered methods, use it to add/register your method giving its slug
 	 *
 	 * @param array $providers - Array with all currently supported providers.
 	 *
@@ -450,11 +510,14 @@ Following is more detailed explanation of every hook and its code implementation
 	}
 ```
 
+#### name_translated
+This hook sets the proper values in the language files so the name can be translated to a different language.
+
 ```
 	/**
 	 * Adds translatable name
-	 * Receives an array with all of the registered methods / providers.
-	 * Using this you can add translatable name of your method to the global methods array supported by the plugin.
+	 * Receives an array with all of the registered methods/providers.
+	 * By using this hook, you can add the translatable name of your method to the global methods array supported by the plugin.
 	 *
 	 * @param array $providers - Array with all currently supported providers and their translated names.
 	 *
@@ -469,9 +532,12 @@ Following is more detailed explanation of every hook and its code implementation
 	}
 ```
 
+#### is_secondary
+This hook lists the 2FA method as a backup method
+
 ```
 	/**
-	 * Marks methods as secondary. Backup methods are secondary methods in plugin, so mark yours as one.
+	 * Lists the 2FA method as a backup method
 	 *
 	 * @return boolean
 	 *
@@ -482,9 +548,12 @@ Following is more detailed explanation of every hook and its code implementation
 	}
 ```
 
+#### backup_method_report_settings
+This hook includes the status of backup methods in Reports
+
 ```
 	/**
-	 * Fulfills the array of the report with all the values needed. Reports related - used for checking the user meta and determine if the given method is enabled or not.
+	 * Populates the report array with all required values. It is used to check the user meta and determine whether the given method is enabled or not when running user 2FA reports.
 	 *
 	 * @param array $settings - The currently collected settings.
 	 *
@@ -501,9 +570,12 @@ Following is more detailed explanation of every hook and its code implementation
 	}
 ```
 
+#### meta_user_backup_method
+Adds an entry in the user’s meta table, which is used for WP 2FA reporting purposes.
+
 ```
 	/**
-	 * Adds the backup method meta key which will be check in the users meta and shown in the report if enabled.
+	 * Adds the backup method meta key, which will be checked in the user's meta and shown in the report if enabled.
 	 *
 	 * @param array $backup_meta_keys - Array with the collected meta keys form backup methods.
 	 *
@@ -518,12 +590,11 @@ Following is more detailed explanation of every hook and its code implementation
 	}
 ```
 
-### Attach methods to the main plugin
+### Add methods to the plugin
 
-In order to be visible to the main plugin, the new methods must be attached to the plugin's logic. You can achieve this by using hte following action:
-`wp_2fa_add_to_class_map`
+In order to be visible to the plugin, the new methods must be attached to the plugin's logic. You can achieve this by using the `wp_2fa_add_to_class_map` action. This tells WP 2FA that there are extensions that need to be loaded.
 
-Example:
+Sample code:
 
 ```
 \add_action(
@@ -545,9 +616,6 @@ Example:
 );
 ```
 
-Where:
-`Classes_Helper` is core 2FA plugin class responsible for some PHP class operations.
-`Main_Method::class` is the name of your class ( method you are implementing )
+Where `Classes_Helper` is the core 2FA plugin class responsible for several PHP class operations. The `Main_Method::class` is the name of your class (the method you are implementing )
 
-This action is called right before some extractions are performed using the `Classes_Helper` class, which is point you need to attach your custom logic.
-The method accepts array with class names as keys and absolute paths as values.
+This action is called right before extractions are performed using the `Classes_Helper` class, at which point you need to attach your custom logic. The method accepts an array with class names as keys and absolute paths as values.
